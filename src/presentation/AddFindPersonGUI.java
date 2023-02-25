@@ -8,17 +8,15 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
 public class AddFindPersonGUI extends JFrame implements ActionListener {
-
     private JTextField recordInput,firstNameInput,lastNameInput,ageInput,phoneInput;
     private JButton btnAdd,btnFind;
-
     public AddFindPersonGUI(){
         setMainFrame();
         setScreenLayout();
     }
-
     /*
      * @ Function Name      : setMainFrame
      * @ Function Params    : None
@@ -28,7 +26,7 @@ public class AddFindPersonGUI extends JFrame implements ActionListener {
         setTitle("Random File Processing");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setResizable(false);
-        setSize(RandomIO.FRAME_WIDTH, RandomIO.FRAME_HEIGHT);
+        setSize(350, 450);
         setLocationRelativeTo(null);
     }
 
@@ -96,7 +94,7 @@ public class AddFindPersonGUI extends JFrame implements ActionListener {
         if(e.getSource()==btnAdd){
             addPersonData();
         }else if(e.getSource()==btnFind){
-            findPersonData();
+                findPersonData();
         }
     }
 
@@ -106,28 +104,31 @@ public class AddFindPersonGUI extends JFrame implements ActionListener {
      * @ Function Purpose   : This method is used validate and add person data into file
      */
     private void addPersonData() {
-        String record= recordInput.getText().trim();
+        //get field input from JTextField
+        int record = Integer.parseInt(recordInput.getText().trim());
         String firstName = firstNameInput.getText().trim();
         String lastName = lastNameInput.getText().trim();
-        String age = ageInput.getText().trim();
+        int age = Integer.parseInt(ageInput.getText().trim());
         String phone= phoneInput.getText().trim();
 
+        //validate input data
         if(validateData(record,firstName,lastName,age,phone)){
-            Person person = new Person();
-            person.setRecord(record);
-            person.setFirstName(firstName);
-            person.setLastName(lastName);
-            person.setAge(Integer.parseInt(age));
-            person.setPhone(phone);
+            Person person = new Person(record,firstName,lastName,age,phone);
+            try {
+                //call method from RandomIo class to find the data is already in the file or not
+                // if it found in the file then show message popup
+                //else data will add into file
+                RandomIO randomIO= new RandomIO();
+                if(randomIO.findperson(record)!=null){
+                    randomIO.addPerson(person);
+                    clearFieldData();
+                }else {
+                    JOptionPane.showMessageDialog(this, "Sorry! Record already in the file with Record ID");
+                }
 
-            if(!RandomIO.isRecordAlready(record)){
-                RandomIO.addPerson(person);
-                JOptionPane.showMessageDialog(this, "Person Record added successfully.");
-                clearFieldData();
-            }else {
-                JOptionPane.showMessageDialog(this, "Sorry! This Record is already in the file.");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-
         }
     }
 
@@ -137,38 +138,46 @@ public class AddFindPersonGUI extends JFrame implements ActionListener {
      * @ Function Purpose   : This method is used find person data from file
      */
     private void findPersonData() {
-        String record= recordInput.getText().trim();
-        if(!record.isEmpty()){
-            Person person = RandomIO.findPerson(record);
-            if(person!=null){
-                setDataIntoFiled(person);
-            }else {
-                clearFieldData();
-                JOptionPane.showMessageDialog(this, "Not any record found belongs to this record id.");
+        //get field input from JTextField
+        int record= Integer.parseInt(recordInput.getText());
+        // if record id enter by the user is >0 then it going to check the data is available into the file or not.
+        if(record>0){
+            try {
+                RandomIO  randomIO = new RandomIO();
+                if(randomIO.findperson(record)!=null){
+                    // this method is used to set data into JTextField after getting from file.
+                    setDataIntoFiled(randomIO.findperson(record));
+                }else {
+                    //This method is used to clear the input filed
+                    clearFieldData();
+                    JOptionPane.showMessageDialog(this, "Not any record found belongs to this record id.");
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }else {
             JOptionPane.showMessageDialog(this, "Please enter valid Record ID #.");
         }
-
     }
 
     /*
      * @ Function Name      : validateData
-     * @ Function Params    : String record,String firstName,String lastName, String age, String phone
+     * @ Function Params    : String firstName,String lastName, String age, String phone
      * @ Function Purpose   : This method is used validate person data
      */
-    public boolean validateData(String record,String firstName,String lastName, String age, String phone ) {
+    public boolean validateData(int record,String firstName,String lastName, int age, String phone ) {
 
         boolean isValid = false;
-        if (record.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter Record ID #.");
-        } else if (firstName.isEmpty() || firstName.length()>20) {
+        if (record<=0) {
+            JOptionPane.showMessageDialog(this, "Please enter valid RecordID");
+        }
+        else if (firstName.isEmpty() || firstName.length()>20) {
             JOptionPane.showMessageDialog(this, "Please enter valid First Name.");
         }
         else if (lastName.isEmpty() ||lastName.length()>25) {
             JOptionPane.showMessageDialog(this, "Please enter valid Last Name.");
         }
-        else if (age.isEmpty()) {
+        else if (age<=0) {
             JOptionPane.showMessageDialog(this, "Please enter valid Age");
         } else if (!RandomIO.isValidNumber(phone) || phone.isEmpty() || phone.length()>10 ) {
             JOptionPane.showMessageDialog(this, "Please enter valid Phone");
