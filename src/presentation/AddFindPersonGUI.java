@@ -119,7 +119,7 @@ public class AddFindPersonGUI extends JFrame implements ActionListener {
                 // if it found in the file then show message popup
                 //else data will add into file
                 RandomIO randomIO= new RandomIO();
-                if(randomIO.findperson(record)!=null){
+                if(randomIO.findperson(record)==null){
                     randomIO.addPerson(person);
                     clearFieldData();
                 }else {
